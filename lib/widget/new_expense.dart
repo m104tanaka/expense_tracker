@@ -14,11 +14,20 @@ class _NewExpenseState extends State<NewExpense> {
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.all(8.0),
+      padding: EdgeInsets.all(16.0),
       child: Card(
         child: Padding(
           padding: EdgeInsets.all(8.0),
-          child: Text('New Expense'),
+          child: Column(
+            children: [
+              TextField(
+                maxLength: 50,
+                decoration: InputDecoration(
+                  label: Text('title'),
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );
