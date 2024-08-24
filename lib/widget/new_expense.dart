@@ -2,7 +2,9 @@ import 'package:expense_tracker/models/expense.dart';
 import 'package:flutter/material.dart';
 
 class NewExpense extends StatefulWidget {
-  const NewExpense({super.key});
+  const NewExpense({super.key, required this.onAddExpense});
+
+  final void Function (Expense expense) onAddExpense;
 
   @override
   State<NewExpense> createState() {
@@ -13,7 +15,8 @@ class NewExpense extends StatefulWidget {
 class _NewExpenseState extends State<NewExpense> {
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
-  DateTime? selectedDate;
+  DateTime? _selectedDate;
+  Category _selectedCategory = Category.leisure;
 
   void _presentDatePicker() async {
     final now = DateTime.now();
@@ -25,8 +28,32 @@ class _NewExpenseState extends State<NewExpense> {
       lastDate: now,
     );
     setState(() {
-      selectedDate = pickedDate;
+      _selectedDate = pickedDate;
     });
+  }
+
+
+  void _submitExpenseData () {
+    final enteredAmount = double.tryParse(_amountController.text);
+    final amounInvalid = enteredAmount == null || enteredAmount <= 0; 
+    if (_titleController.text.trim().isEmpty || amounInvalid || _selectedDate == null) {
+      showDialog(context: context, builder: (ctx) => AlertDialog(
+        title: const Text('Invalid Input'),
+        content: const Text('Please enter a valid title and amount'),
+        actions: [
+          TextButton(onPressed: () {
+            Navigator.pop(ctx);
+          }, child: const Text('Okay'))
+        ],
+      ),);
+    }
+    final newExpense = Expense(
+      title: _titleController.text,
+      amount: enteredAmount!,
+      date: _selectedDate!,
+      category: _selectedCategory,
+    );
+    widget.onAddExpense(newExpense);
   }
 
   @override
@@ -69,9 +96,9 @@ class _NewExpenseState extends State<NewExpense> {
                       child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      selectedDate == null
+                      _selectedDate == null
                           ? const Text('No Date Chosen')
-                          : Text(formatter.format(selectedDate!)),
+                          : Text(formatter.format(_selectedDate!)),
                       IconButton(
                           onPressed: () {
                             _presentDatePicker();
@@ -81,9 +108,11 @@ class _NewExpenseState extends State<NewExpense> {
                   ))
                 ],
               ),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   DropdownButton(
+                    value: _selectedCategory,
                       items: Category.values.map((category) {
                         return DropdownMenuItem(
                           value: category,
@@ -91,8 +120,15 @@ class _NewExpenseState extends State<NewExpense> {
                         );
                       }).toList(),
                       onChanged: (value) {
-                        print(value);
-                      }),
+                        if (value == null) {
+                          return;
+                        }
+                        setState(() {
+                          _selectedCategory = value ;  
+                        });
+                      }
+                      ),
+                  const Spacer(),
                   TextButton(
                       onPressed: () {
                         Navigator.pop(context);
@@ -100,11 +136,8 @@ class _NewExpenseState extends State<NewExpense> {
                       child: const Text('cancell')),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    onPressed: () {
-                      print(_titleController.text);
-                      print(_amountController.text);
-                    },
-                    child: const Text('Add Expense'),
+                      onPressed: _submitExpenseData,
+                      child: const Text('Save Expense'),
                   ),
                 ],
               ),
